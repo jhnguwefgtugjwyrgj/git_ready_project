@@ -7,7 +7,6 @@ from wtforms.validators import DataRequired
 from data import db_session, news, users
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import os
-import requests
 
 
 db_session.global_init("db/blogs.sqlite")
