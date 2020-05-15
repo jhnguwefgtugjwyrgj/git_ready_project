@@ -10,8 +10,9 @@
         {{item.content}}
     </div>
     <div>
-        Цена = {{item.price}}, Продовец - {{item.user.name}}
+        Цена = {{item.price}}, Продавец - {{item.user.name}}
     </div>
+    <a href="/photo/{{ item.id }}" class="btn btn-warning">Обзор</a>
 </div>
 {% endfor %}
 {% endblock %}

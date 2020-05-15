@@ -2,11 +2,12 @@ from flask import Flask, render_template, redirect, request, make_response, sess
 from flask_wtf import FlaskForm
 from flask_login import LoginManager, login_user, logout_user
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, BooleanField,\
-    IntegerField
+    IntegerField, FileField
 from wtforms.validators import DataRequired
 from data import db_session, news, users
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-import datetime as dt
+import os
+import requests
 
 
 db_session.global_init("db/blogs.sqlite")
@@ -43,8 +44,14 @@ class NewsForm(FlaskForm):
     content = TextAreaField('Описание')
     price = IntegerField('Цена')
     count = IntegerField('Количество товара')
+    image = FileField('Выберете изображение')
     is_private = BooleanField("Личное")
     submit = SubmitField('Добавить')
+
+
+class SearchForm(FlaskForm):
+    search = StringField('Введите название интересующего вас товара', validators=[DataRequired()])
+    submit = SubmitField('Начать поиск')
 
 
 @app.route('/logout')
@@ -64,12 +71,31 @@ def add_news():
         new.is_private = form.is_private.data
         new.price = form.price.data
         new.count = form.count.data
+        if form.image.data is not None:
+            for root, dirnames, filenames in os.walk('\\'):
+                for file in filenames:
+                    if file == form.image.data:
+                        with open(os.path.join(root, file), 'rb') as file:
+                            new.image = file.read()
         current_user.news.append(new)
         sessions.merge(current_user)
         sessions.commit()
         return redirect('/')
     else:
         return render_template('news.html', title='Добавление товара', form=form)
+
+
+@app.route('/photo/<int:id>')
+def photo(id):
+    session = db_session.create_session()
+    photo = session.query(news.News).filter(news.News.id == id).first()
+    if photo.image is not None:
+        with open('static/image.jpg', 'wb') as file:
+            file.write(photo.image)
+        return render_template('image.html', image='../static/image.jpg', item=photo)
+    else:
+        return render_template('image.html', image="../static/default_image.jpg", item=photo,
+                               title='Просмотр фото')
 
 
 @app.route('/buys')
@@ -122,6 +148,8 @@ def edit_news(id):
             new.is_private = form.is_private.data
             new.price = form.price.data
             new.count = form.count.data
+            with open('form.image.data', 'rb') as file:
+                new.image = file.read()
             sessions.commit()
             return redirect('/')
         else:
@@ -164,7 +192,24 @@ def index():
                                                (news.News.is_private != True))
     else:
         new = sessions.query(news.News).filter(news.News.is_private != True)
-    return render_template("index.html", title='Товары на продажу', news=new)
+    return render_template("index.html", title='Товары на продажу', news=new, filter='')
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    form = SearchForm()
+    if form.validate_on_submit():
+        sessions = db_session.create_session()
+        if current_user.is_authenticated:
+            new = sessions.query(news.News).filter((news.News.user == current_user) |
+                                                   (news.News.is_private != True))
+        else:
+            new = sessions.query(news.News).filter(news.News.is_private != True)
+        for i in new:
+            print(i.title, form.search.data)
+        return render_template('index.html', title='Товары на продажу', news=new,
+                               filter=form.search.data, len=len(form.search.data))
+    return render_template('search.html', title='Поиск', form=form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -193,7 +238,6 @@ def reqister():
 
 
 def main():
-    sessions = db_session.create_session()
     app.run()
 
 

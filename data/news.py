@@ -14,5 +14,6 @@ class News(SqlAlchemyBase):
     is_private = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
     price = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+    image = sqlalchemy.Column(sqlalchemy.BLOB, nullable=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
     user = orm.relation('User')

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Название: {{item.title}}</h1>
+<h2>Описание: {{item.content}}</h2>
+<h2>Цена: {{item.price}}, Количество: {{item.count}}</h2>
+<h2>Фото: </h2>
+<img src={{image}} alt="По отдельности работает">
+{% endblock %}
